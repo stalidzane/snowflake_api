@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map and Panel</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        body {
+            display: flex;
+            margin: 0;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Panel styles */
+        .panel {
+            width: 25%;
+            padding: 20px;
+            background-color: #f4f4f4;
+            box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+        }
+
+        .panel input,
+        .panel select,
+        .panel button {
+            display: block;
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 8px;
+            font-size: 16px;
+        }
+
+        /* Map styles */
+        #map {
+            flex: 1;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <!-- Left Panel -->
+    <div class="panel">
+        <h2>Select Countries & Parameters</h2>
+
+        <label for="country1">Country 1</label>
+        <input type="text" id="country1" readonly placeholder="Select from the map">
+
+        <label for="country2">Country 2</label>
+        <input type="text" id="country2" readonly placeholder="Select from the map">
+
+        <label for="param1">Parameter 1</label>
+        <select id="param1">
+            <option value="SUM">SUM</option>
+            <option value="AVG">AVG</option>
+        </select>
+
+        <label for="param2">Parameter 2</label>
+        <select id="param2">
+            <option value="literacy">Literacy Rate</option>
+            <option value="life_expectancy">Life Expectancy</option>
+            <option value="internet_users">Internet Users</option>
+        </select>
+
+        <button onclick="cases()">Submit</button>
+
+        <hr>
+
+        <form id="results">
+            <table style="width:100%; border:1px solid black">
+                <caption>Output from API</caption>
+                <tr><td><p id="output"></p></td></tr>
+            </table>
+        </form>
+    </div>
+
+    <!-- Right Panel (Map) -->
+    <div id="map"></div>
+
+    <script>
+        // Initialize variables for selected countries
+        let country1 = null;
+        let country2 = null;
+
+        // Initialize the map
+        const map = L.map('map').setView([20, 0], 2);
+        
+        // Set maximum bounds to limit the viewable area to the world map
+        var bounds = [[-100, -180], [85, 180]];
+        map.setMaxBounds(bounds);
+        map.on('drag', function() {
+            map.panInsideBounds(bounds, { animate: false });
+        });
+        // Load the tile layer for the map
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 5,
+            minZoom: 2,
+            noWrap: true,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Load GeoJSON data for countries
+        fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    onEachFeature: function (feature, layer) {
+                        layer.on('click', function () {
+                            if (!country1) {
+                                country1 = feature.properties.ADMIN;
+                                document.getElementById('country1').value = country1;
+                                alert('You selected ' + country1 + '. Now choose another country.');
+                                console.log(country1)
+                            } else if (!country2) {
+                                country2 = feature.properties.ADMIN;
+                                document.getElementById('country2').value = country2;
+                                alert('You selected ' + country2 + '.');
+                                console.log(country2)
+                            }
+                        });
+                    }
+                }).addTo(map);
+            });
+
+        // Function to handle submit action
+        function cases() {
+            
+            const param1 = document.getElementById('param1').value;
+            //const param2 = document.getElementById('param2').value;
+
+            if (!country1 || !country2) {
+                alert("Please select two countries on the map.");
+                return;
+            }
+            console.log("calls cases()"+ country1 + country2 + param1)
+            method = "connector"
+            // Example logic to handle data submission, API calls, etc.
+            apiurl = "/" + method + "/cases/"+ country1 + "/"+ country2 + "/"+ param1
+            //=${country2}&param1=${param1}&param2=${param2}
+
+            document.getElementById("output").innerHTML = "Getting Data";
+            fetch(apiurl)
+                .then(response => response.json())
+                .then(data => document.getElementById("output").innerHTML = "<pre>" + JSON.stringify(data, null, "  ") + "</pre>")
+                .catch(error => document.getElementById("output").innerHTML = "There was an error: " + error)
+            
+        }
+    </script>
+</body>
+</html>
