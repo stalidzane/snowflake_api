@@ -7,6 +7,7 @@ from snowflake.connector import DictCursor
 from flask import Blueprint, request, abort, jsonify, make_response
 
 from data_processing import plot_graph_relative, plot_graph_cases
+from mongo_connect import add_user_comment, get_user_comments
 
 # Make the Snowflake connection
 def connect() -> snowflake.connector.SnowflakeConnection:
@@ -43,3 +44,13 @@ def cases(c1, c2, param1, param2):
     elif param2 == "relative_cases":
         # sql = get_relative_cases_query(c1, c2)
         return plot_graph_relative(c1, c2, conn)
+    
+@connector.route('/add_comment', methods=['POST'])
+def add_comment():
+    data = request.json
+    response = add_user_comment(data)
+    return jsonify(response), 201
+
+@connector.route('/get_comments', methods=['GET'])
+def get_comments():
+    return get_user_comments()

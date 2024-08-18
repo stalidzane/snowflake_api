@@ -50,7 +50,7 @@ def plot_graph_cases(c1, c2, param1, param2, conn):
     plt.title(f'COVID-19 {column} in {c1} and {c2} from {start_date} to {end_date}')
     plt.xlabel('Country')
     plt.ylabel('Cumulative number of cases')
-    plt.legend()
+    # plt.legend()
     # plt.show()
 
     # Save the plot to a bytes buffer
