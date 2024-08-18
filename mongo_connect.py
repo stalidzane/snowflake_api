@@ -44,12 +44,3 @@ def get_user_comments():
     comments =  list(d for d in cursor)  
 
     return jsonify(comments), 200
-
-
-# try:
-#     # List the databases to verify the connection
-#     databases = client.list_database_names()
-#     print("Connected to MongoDB successfully!")
-#     print("Databases:", databases)
-# except Exception as e:
-#     print("An error occurred:", e)

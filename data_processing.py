@@ -9,7 +9,7 @@ from flask import jsonify
 # from connector import connect
 # conn =connect()
 
-def cases_deaths_query(c1, c2, param1, param2):
+def cases_deaths_query(c1, param1, param2):
     # Determine the column to query based on param2
     case = {
         "cumulative_cases": "Confirmed",
@@ -19,14 +19,16 @@ def cases_deaths_query(c1, c2, param1, param2):
     SELECT 
         COUNTRY_REGION AS Country, 
         {param1}(CASES) AS CASES,
-        min(date) as Starting_date, 
-        max(date) as Ending_date
+        DATE
     FROM 
         JHU_COVID_19
     WHERE 
-        COUNTRY_REGION IN ('{c1}', '{c2}') AND CASE_TYPE ='{case}'
+        COUNTRY_REGION = '{c1}' AND CASE_TYPE ='{case}'
+        AND DATE BETWEEN '2020-01-22' AND '2023-03-09'
     GROUP BY 
-        COUNTRY_REGION;
+        COUNTRY_REGION, DATE
+    ORDER BY 
+        DATE;
     """
     return sql
 
@@ -36,21 +38,29 @@ def plot_graph_cases(c1, c2, param1, param2, conn):
         "total_deaths": "Total deaths"
     }.get(param2)
 
-    df_c1 = pd.read_sql(cases_deaths_query(c1, c2, param1, param2), conn)
+    df_c1 = pd.read_sql(cases_deaths_query(c1, param1, param2), conn)
+    df_c2 = pd.read_sql(cases_deaths_query(c2, param1, param2), conn)
+    # Ensure the cases are numbers, not strings
+    df_c1['CASES'] = pd.to_numeric(df_c1['CASES'], errors='coerce')
+    df_c2['CASES'] = pd.to_numeric(df_c2['CASES'], errors='coerce')
+
+
     # Ensure the date column is in datetime format
-    df_c1['STARTING_DATE'] = pd.to_datetime(df_c1['STARTING_DATE'])
-    df_c1['ENDING_DATE'] = pd.to_datetime(df_c1['ENDING_DATE'])
-    start_date = df_c1.loc[0, 'STARTING_DATE'].strftime('%Y-%m-%d')
-    end_date = df_c1.loc[0, 'ENDING_DATE'].strftime('%Y-%m-%d')
+    df_c1['DATE'] = pd.to_datetime(df_c1['DATE']).dt.date
+    df_c2['DATE'] = pd.to_datetime(df_c2['DATE']).dt.date
+    
+    # start_date = df_c1.loc[0, 'STARTING_DATE'].strftime('%Y-%m-%d')
+    # end_date = df_c1.loc[0, 'ENDING_DATE'].strftime('%Y-%m-%d')
 
 
     # Plot the cases in a bar graph
     plt.figure(figsize=(10, 6))
-    plt.bar(df_c1['COUNTRY'], df_c1['CASES'], width=0.4)
-    plt.title(f'COVID-19 {column} in {c1} and {c2} from {start_date} to {end_date}')
+    plt.plot(df_c1['DATE'], df_c1['CASES'], label=f'Cases in {c1}')
+    plt.plot(df_c2['DATE'], df_c2['CASES'], label=f'Cases in {c2}')
+    plt.title(f'COVID-19 {column} in {c1} and {c2} from 2020-01-22 to 2023-03-09')    #from {start_date} to {end_date}')
     plt.xlabel('Country')
-    plt.ylabel('Cumulative number of cases')
-    # plt.legend()
+    plt.ylabel('Number of cases')
+    plt.legend()
     # plt.show()
 
     # Save the plot to a bytes buffer
@@ -66,7 +76,7 @@ def plot_graph_cases(c1, c2, param1, param2, conn):
 
 
 def relative_cases(c1):
-    sql_query = f'''
+    sql = f'''
 SELECT 
     jhu.date, 
     jhu.country_region, 
@@ -84,11 +94,16 @@ GROUP BY
 ORDER BY 
     jhu.date, jhu.country_region;
 '''
-    return sql_query
+    return sql
 
 def plot_graph_relative(c1, c2, conn):
     df_c1 = pd.read_sql(relative_cases(c1), conn)
     df_c2 = pd.read_sql(relative_cases(c2), conn)
+    # Ensure the cases are numbers, not strings
+    df_c1['RELATIVE_DAILY_CASES'] = pd.to_numeric(df_c1['RELATIVE_DAILY_CASES'], errors='coerce')
+    df_c2['RELATIVE_DAILY_CASES'] = pd.to_numeric(df_c2['RELATIVE_DAILY_CASES'], errors='coerce')
+
+
     # Ensure the date column is in datetime format
     df_c1['DATE'] = pd.to_datetime(df_c1['DATE']).dt.date
     df_c2['DATE'] = pd.to_datetime(df_c2['DATE']).dt.date
