@@ -2,7 +2,7 @@ import os
 #import ngrok
 import logging
 
-from flask import Flask, jsonify, make_response, send_file
+from flask import Flask, jsonify, make_response, send_file, render_template
 from connector import connector
 #from snowpark import snowpark
 
@@ -14,7 +14,8 @@ app.register_blueprint(connector, url_prefix='/connector')
 
 @app.route("/")
 def default():
-    return make_response(jsonify(result='Nothing to see here'))
+    # return make_response(jsonify(result='Nothing to see here'))
+    return render_template('combined.html')
 
 @app.route("/test")
 def tester():
