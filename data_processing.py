@@ -8,17 +8,84 @@ from flask import jsonify
 
 # from connector import connect
 # conn =connect()
+def mortality_rate_query(c1):
+    sql=f"""
+    SELECT
+        SUB.DATE,
+        COUNTRY_REGION AS COUNTRY,
+        CASE 
+            WHEN SUM(SUB.TOTAL_CONFIRMED) OVER (ORDER BY SUB.DATE) > 0 
+            THEN (SUM(SUB.TOTAL_DEATHS) OVER (ORDER BY SUB.DATE) /
+                SUM(SUB.TOTAL_CONFIRMED) OVER (ORDER BY SUB.DATE)) * 100
+            ELSE NULL
+        END AS MORTALITY_RATE
+    FROM
+        (
+            SELECT
+                DATE,
+                SUM(CASE WHEN CASE_TYPE = 'Confirmed' THEN CASES ELSE 0 END) AS TOTAL_CONFIRMED,
+                SUM(CASE WHEN CASE_TYPE = 'Deaths' THEN CASES ELSE 0 END) AS TOTAL_DEATHS
+            FROM
+                JHU_COVID_19
+            WHERE
+                COUNTRY_REGION = '{c1}'  
+                AND DATE BETWEEN '2020-01-22' AND '2023-03-09'
+            GROUP BY
+                DATE
+        ) SUB
+    ORDER BY
+        SUB.DATE;
+    """
+    return sql
 
-def cases_deaths_query(c1, param1, param2):
-    # Determine the column to query based on param2
+def plot_graph_mortality(c1, c2, param2, conn):
+    df_c1 = pd.read_sql(mortality_rate_query(c1), conn)
+    df_c2 = pd.read_sql(mortality_rate_query(c2), conn)
+
+    # Ensure the cases are numbers, not strings
+    df_c1['MORTALITY_RATE'] = pd.to_numeric(df_c1['MORTALITY_RATE'], errors='coerce')
+    df_c2['MORTALITY_RATE'] = pd.to_numeric(df_c2['MORTALITY_RATE'], errors='coerce')
+
+
+    # Ensure the date column is in datetime format
+    df_c1['DATE'] = pd.to_datetime(df_c1['DATE']).dt.date
+    df_c2['DATE'] = pd.to_datetime(df_c2['DATE']).dt.date
+    
+    # start_date = df_c1.loc[0, 'STARTING_DATE'].strftime('%Y-%m-%d')
+    # end_date = df_c1.loc[0, 'ENDING_DATE'].strftime('%Y-%m-%d')
+
+
+    # Plot the mortality rate in a bar graph
+    plt.figure(figsize=(10, 6))
+    plt.plot(df_c1['DATE'], df_c1['MORTALITY_RATE'], label=f'Mortality rate in {c1}')
+    plt.plot(df_c2['DATE'], df_c2['MORTALITY_RATE'], label=f'Mortality rate in {c2}')
+    plt.title(f'COVID-19 mortality rate in {c1} and {c2} from 2020-01-22 to 2023-03-09')    #from {start_date} to {end_date}')
+    plt.xlabel('Country')
+    plt.ylabel('Number of cases')
+    plt.legend()
+    # plt.show()
+
+    # Save the plot to a bytes buffer
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+    buf.close()
+
+    
+    # Return the image as a base64 encoded string in a JSON response
+    return jsonify({"plot": img_base64})
+
+def cases_deaths_query(c1, param2):
+    # Determine the case to query based on param2
     case = {
         "cumulative_cases": "Confirmed",
         "total_deaths": "Deaths"
     }.get(param2)
     sql = f"""
     SELECT 
-        COUNTRY_REGION AS Country, 
-        {param1}(CASES) AS CASES,
+        COUNTRY_REGION AS COUNTRY, 
+        SUM(CASES) AS CASES,
         DATE
     FROM 
         JHU_COVID_19
@@ -32,14 +99,14 @@ def cases_deaths_query(c1, param1, param2):
     """
     return sql
 
-def plot_graph_cases(c1, c2, param1, param2, conn):
+def plot_graph_cases(c1, c2, param2, conn):
     column = {
         "cumulative_cases": "Cumulative cases",
         "total_deaths": "Total deaths"
     }.get(param2)
 
-    df_c1 = pd.read_sql(cases_deaths_query(c1, param1, param2), conn)
-    df_c2 = pd.read_sql(cases_deaths_query(c2, param1, param2), conn)
+    df_c1 = pd.read_sql(cases_deaths_query(c1, param2), conn)
+    df_c2 = pd.read_sql(cases_deaths_query(c2, param2), conn)
     # Ensure the cases are numbers, not strings
     df_c1['CASES'] = pd.to_numeric(df_c1['CASES'], errors='coerce')
     df_c2['CASES'] = pd.to_numeric(df_c2['CASES'], errors='coerce')
@@ -75,46 +142,47 @@ def plot_graph_cases(c1, c2, param1, param2, conn):
     return jsonify({"plot": img_base64})
 
 
-def relative_cases(c1):
+def infection_rate_query(c1):
     sql = f'''
 SELECT 
-    jhu.date, 
-    jhu.country_region, 
-    (SUM(jhu.cases) / ecdc.population)*100 AS relative_daily_cases
+    JHU.DATE, 
+    JHU.COUNTRY_REGION, 
+    (SUM(JHU.CASES) / ECDC.POPULATION) * 100 AS INFECTION_RATE
 FROM 
-    jhu_covid_19 jhu
+    JHU_COVID_19 JHU
 INNER JOIN 
-    (SELECT country_region, population AS population FROM ecdc_global GROUP BY country_region, population) ecdc
-    ON jhu.country_region = ecdc.country_region
+    (SELECT COUNTRY_REGION, POPULATION AS POPULATION FROM ECDC_GLOBAL GROUP BY COUNTRY_REGION, POPULATION) ECDC
+    ON JHU.COUNTRY_REGION = ECDC.COUNTRY_REGION
 WHERE 
-    jhu.date BETWEEN '2020-01-22' AND '2023-03-09'
-    AND jhu.country_region = '{c1}' AND jhu.case_type ='Confirmed'
+    JHU.DATE BETWEEN '2020-01-22' AND '2023-03-09'
+    AND JHU.COUNTRY_REGION = '{c1}' AND JHU.CASE_TYPE = 'Confirmed'
 GROUP BY 
-    jhu.date, jhu.country_region, ecdc.population
+    JHU.DATE, JHU.COUNTRY_REGION, ECDC.POPULATION
 ORDER BY 
-    jhu.date, jhu.country_region;
+    JHU.DATE, JHU.COUNTRY_REGION;
+
 '''
     return sql
 
-def plot_graph_relative(c1, c2, conn):
-    df_c1 = pd.read_sql(relative_cases(c1), conn)
-    df_c2 = pd.read_sql(relative_cases(c2), conn)
+def plot_graph_infection(c1, c2, conn):
+    df_c1 = pd.read_sql(infection_rate_query(c1), conn)
+    df_c2 = pd.read_sql(infection_rate_query(c2), conn)
     # Ensure the cases are numbers, not strings
-    df_c1['RELATIVE_DAILY_CASES'] = pd.to_numeric(df_c1['RELATIVE_DAILY_CASES'], errors='coerce')
-    df_c2['RELATIVE_DAILY_CASES'] = pd.to_numeric(df_c2['RELATIVE_DAILY_CASES'], errors='coerce')
+    df_c1['INFECTION_RATE'] = pd.to_numeric(df_c1['INFECTION_RATE'], errors='coerce')
+    df_c2['INFECTION_RATE'] = pd.to_numeric(df_c2['INFECTION_RATE'], errors='coerce')
 
 
     # Ensure the date column is in datetime format
     df_c1['DATE'] = pd.to_datetime(df_c1['DATE']).dt.date
     df_c2['DATE'] = pd.to_datetime(df_c2['DATE']).dt.date
 
-    # Plot the relative daily cases for both countries
+    # Plot the infection rate for both countries
     plt.figure(figsize=(10, 6))
-    plt.plot(df_c1['DATE'], df_c1['RELATIVE_DAILY_CASES'], label=f'Relative Daily Cases {c1}(%)')
-    plt.plot(df_c2['DATE'], df_c2['RELATIVE_DAILY_CASES'], label=f'Relative Daily Cases {c2}(%)')
-    plt.title(f'COVID-19 Relative Daily Cases in {c1} and {c2}')
+    plt.plot(df_c1['DATE'], df_c1['INFECTION_RATE'], label=f'Infection Rate {c1}(%)')
+    plt.plot(df_c2['DATE'], df_c2['INFECTION_RATE'], label=f'Infection Rate {c2}(%)')
+    plt.title(f'COVID-19 Infection Rate in {c1} and {c2}')
     plt.xlabel('Date')
-    plt.ylabel('Relative Daily Cases (%)')
+    plt.ylabel('Infection Rate (%)')
     plt.legend()
     # plt.show()
 

@@ -18,7 +18,7 @@ def add_user_comment(data):
         "country2": data['country2'],
         "param2": data['param2'],
         "comment": data['comment'],
-        "timestamp": datetime.datetime.now().isoformat()  # Use UTC time for consistency
+        "timestamp": datetime.datetime.now().isoformat()
     }
     
     # Insert the comment into MongoDB

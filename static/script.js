@@ -1,19 +1,44 @@
 console.log("script.js loaded");
 
+function getPrediction() {
+    const pred = document.getElementById("pred").value;
+    if (!country1 || !country2) {
+        alert("Please select two countries on the map.");
+        return;
+    }
+    console.log("calls getPrediction()"+ country1 + country2 + pred)
+    apiurl = "/connector/get_prediction/" + country1 + "/" + country2 + "/" + pred
+    fetch(apiurl)
+        .then(response => response.json())
+        .then(data => {
+            let plot_url = data.plot_url;
+            // If the plot is returned, display it
+            if (data.plot_url) {
+                console.log("Received data:", data);
+                const imgElement = document.getElementById('pred_img');
+                imgElement.src = 'data:image/png;base64,' + data.plot_url;
+                imgElement.style.display = 'block'; // Make the image visible
+            } else {
+                alert('No plot was generated');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching prediction:', error);
+        });
+}
+
 // Function to handle submit action
 function cases() {
-            
-    const param1 = document.getElementById('param1').value;
     const param2 = document.getElementById('param2').value;
 
     if (!country1 || !country2) {
         alert("Please select two countries on the map.");
         return;
     }
-    console.log("calls cases()"+ country1 + country2 + param1 + param2)
+    console.log("calls cases()"+ country1 + country2 + param2)
     method = "connector"
     // Example logic to handle data submission, API calls, etc.
-    apiurl = "/" + method + "/cases/" + country1 + "/" + country2 + "/"+ param1 + "/" + param2
+    apiurl = "/" + method + "/cases/" + country1 + "/" + country2 + "/" + param2
 
     document.getElementById("output").innerHTML = "Getting Data";
     fetch(apiurl)
@@ -64,7 +89,7 @@ function addComment() {
     .then(response => response.json())
     .then(data => {
         alert(data.message);
-        document.getElementById('comment').value = ''; // Clear the comment box after submission
+        document.getElementById('comment').value = '';
     })
     .catch(error => console.error('Error:', error));
 }
@@ -97,5 +122,6 @@ function clearSelection() {
     document.getElementById('country1').value = '';
     document.getElementById('country2').value = '';
     document.getElementById('plot').style.display = 'none';
+    document.getElementById('pred_img').style.display = 'none';
     console.log("Selection and graph cleared");
 }

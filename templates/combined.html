@@ -68,21 +68,24 @@
         <label for="country2">Country 2</label>
         <input type="text" id="country2" readonly placeholder="Select from the map">
 
-        <label for="param1">Parameter 1</label>
-        <select id="param1">
-            <option value="SUM">SUM</option>
-            <option value="AVG">AVG</option>
-            <option value="AVG">Other</option>
-        </select>
+
 
         <label for="param2">Parameter 2</label>
         <select id="param2">
             <option value="cumulative_cases">Cumulative Cases</option>
             <option value="total_deaths">Total Deaths</option>
-            <option value="relative_cases">Relative Cases</option>
+            <option value="infection_rate">Infection Rate</option>
+            <option value="mortality_rate">Mortality Rate</option>
+
         </select>
 
         <button onclick="cases()">Submit</button>
+        <label for="pred">Predictions</label>
+        <select id="pred">
+            <option value="infection_rate">Infection Rate</option>
+            <option value="mortality_rate">Mortality Rate</option>
+        </select>
+        <button onclick="getPrediction()">Get Prediction</button>
         <button onclick="clearSelection()">Clear</button>
         
         <h2>Add Your Comment</h2>
@@ -104,8 +107,11 @@
     <!-- Placeholder for the plot -->
     <img id="plot" src="" alt="Plot will appear here" style="display:none;">
 
-    <script src="static/map.js" defer></script>
-    <script src="static/script.js" defer></script>
+    <!-- In your HTML template, you can include the plot like this: -->
+    <img id="pred_img" src="" alt="Forecast plot" style="display:none;">
+
+    <script src="static/map.js"></script>
+    <script src="static/script.js" ></script>
 
     <style>
         .comment-block {
