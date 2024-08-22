@@ -12,12 +12,11 @@ function getPrediction() {
         .then(response => response.json())
         .then(data => {
             let plot_url = data.plot_url;
-            // If the plot is returned, display it
             if (data.plot_url) {
                 console.log("Received data:", data);
-                const imgElement = document.getElementById('pred_img');
+                const imgElement = document.getElementById('plot');
                 imgElement.src = 'data:image/png;base64,' + data.plot_url;
-                imgElement.style.display = 'block'; // Make the image visible
+                imgElement.style.display = 'block';
             } else {
                 alert('No plot was generated');
             }
@@ -29,31 +28,24 @@ function getPrediction() {
 
 // Function to handle submit action
 function cases() {
-    const param2 = document.getElementById('param2').value;
+    const param = document.getElementById('param').value;
 
     if (!country1 || !country2) {
         alert("Please select two countries on the map.");
         return;
     }
-    console.log("calls cases()"+ country1 + country2 + param2)
-    method = "connector"
-    // Example logic to handle data submission, API calls, etc.
-    apiurl = "/" + method + "/cases/" + country1 + "/" + country2 + "/" + param2
+    console.log("calls cases()"+ country1 + country2 + param)
+    apiurl = "/connector/cases/" + country1 + "/" + country2 + "/" + param
 
     document.getElementById("output").innerHTML = "Getting Data";
-    fetch(apiurl)
-        // .then(response => response.json())
-        // .then(data => document.getElementById("output").innerHTML = "<pre>" + JSON.stringify(data, null, "  ") + "</pre>")
-        // .catch(error => document.getElementById("output").innerHTML = "There was an error: " + error)
-        
+    fetch(apiurl)        
         .then(response => response.json())
         .then(data => {
-            // If the plot is returned, display it
             if (data.plot) {
                 console.log(data)
                 const imgElement = document.getElementById('plot');
                 imgElement.src = 'data:image/png;base64,' + data.plot;
-                imgElement.style.display = 'block'; // Make the image visible
+                imgElement.style.display = 'block'; 
             } else {
                 alert('No plot was generated');
             }
@@ -74,10 +66,10 @@ function addComment() {
     }
 
     const data = {
-        user_id: "user123",  // Replace with dynamic user ID if available
+        user_id: "user123", 
         country1: country1,
         country2: country2,
-        param2: document.getElementById('param2').value,
+        param: document.getElementById('param').value,
         comment: comment
     };
 
@@ -104,7 +96,7 @@ function getComments(){
                 <div class="comment-block">
                     <p><strong>Country 1:</strong> ${comment.country1}</p>
                     <p><strong>Country 2:</strong> ${comment.country2}</p>
-                    <p><strong>Parameter:</strong> ${comment.param2}</p>
+                    <p><strong>Parameter:</strong> ${comment.param}</p>
                     <p><strong>Comment:</strong> ${comment.comment}</p>
                     <p><strong>Timestamp:</strong> ${new Date(comment.timestamp).toLocaleString()}</p>
                 </div>

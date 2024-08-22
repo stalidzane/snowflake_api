@@ -14,7 +14,6 @@
             font-family: Arial, sans-serif;
         }
 
-        /* Panel styles */
         .panel {
             width: 25%;
             padding: 20px;
@@ -70,8 +69,8 @@
 
 
 
-        <label for="param2">Parameter 2</label>
-        <select id="param2">
+        <label for="param">Parameter</label>
+        <select id="param">
             <option value="cumulative_cases">Cumulative Cases</option>
             <option value="total_deaths">Total Deaths</option>
             <option value="infection_rate">Infection Rate</option>
@@ -106,9 +105,6 @@
     <div id="map"></div>
     <!-- Placeholder for the plot -->
     <img id="plot" src="" alt="Plot will appear here" style="display:none;">
-
-    <!-- In your HTML template, you can include the plot like this: -->
-    <img id="pred_img" src="" alt="Forecast plot" style="display:none;">
 
     <script src="static/map.js"></script>
     <script src="static/script.js" ></script>

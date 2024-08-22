@@ -1,18 +1,15 @@
 import pandas as pd
 import matplotlib
-matplotlib.use('Agg')  # Use Agg backend for non-interactive plotting
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import io
 import base64
 from flask import jsonify
 
-# from connector import connect
-# conn =connect()
 def mortality_rate_query(c1):
     sql=f"""
     SELECT
         SUB.DATE,
-        COUNTRY_REGION AS COUNTRY,
         CASE 
             WHEN SUM(SUB.TOTAL_CONFIRMED) OVER (ORDER BY SUB.DATE) > 0 
             THEN (SUM(SUB.TOTAL_DEATHS) OVER (ORDER BY SUB.DATE) /
@@ -38,7 +35,7 @@ def mortality_rate_query(c1):
     """
     return sql
 
-def plot_graph_mortality(c1, c2, param2, conn):
+def plot_graph_mortality(c1, c2, param, conn):
     df_c1 = pd.read_sql(mortality_rate_query(c1), conn)
     df_c2 = pd.read_sql(mortality_rate_query(c2), conn)
 
@@ -50,20 +47,15 @@ def plot_graph_mortality(c1, c2, param2, conn):
     # Ensure the date column is in datetime format
     df_c1['DATE'] = pd.to_datetime(df_c1['DATE']).dt.date
     df_c2['DATE'] = pd.to_datetime(df_c2['DATE']).dt.date
-    
-    # start_date = df_c1.loc[0, 'STARTING_DATE'].strftime('%Y-%m-%d')
-    # end_date = df_c1.loc[0, 'ENDING_DATE'].strftime('%Y-%m-%d')
-
-
+ 
     # Plot the mortality rate in a bar graph
     plt.figure(figsize=(10, 6))
     plt.plot(df_c1['DATE'], df_c1['MORTALITY_RATE'], label=f'Mortality rate in {c1}')
     plt.plot(df_c2['DATE'], df_c2['MORTALITY_RATE'], label=f'Mortality rate in {c2}')
-    plt.title(f'COVID-19 mortality rate in {c1} and {c2} from 2020-01-22 to 2023-03-09')    #from {start_date} to {end_date}')
+    plt.title(f'COVID-19 mortality rate in {c1} and {c2} from 2020-01-22 to 2023-03-09')
     plt.xlabel('Country')
     plt.ylabel('Number of cases')
     plt.legend()
-    # plt.show()
 
     # Save the plot to a bytes buffer
     buf = io.BytesIO()
@@ -76,12 +68,12 @@ def plot_graph_mortality(c1, c2, param2, conn):
     # Return the image as a base64 encoded string in a JSON response
     return jsonify({"plot": img_base64})
 
-def cases_deaths_query(c1, param2):
-    # Determine the case to query based on param2
+def cases_deaths_query(c1, param):
+    # Determine the case to query based on param
     case = {
         "cumulative_cases": "Confirmed",
         "total_deaths": "Deaths"
-    }.get(param2)
+    }.get(param)
     sql = f"""
     SELECT 
         COUNTRY_REGION AS COUNTRY, 
@@ -99,14 +91,14 @@ def cases_deaths_query(c1, param2):
     """
     return sql
 
-def plot_graph_cases(c1, c2, param2, conn):
+def plot_graph_cases(c1, c2, param, conn):
     column = {
         "cumulative_cases": "Cumulative cases",
         "total_deaths": "Total deaths"
-    }.get(param2)
+    }.get(param)
 
-    df_c1 = pd.read_sql(cases_deaths_query(c1, param2), conn)
-    df_c2 = pd.read_sql(cases_deaths_query(c2, param2), conn)
+    df_c1 = pd.read_sql(cases_deaths_query(c1, param), conn)
+    df_c2 = pd.read_sql(cases_deaths_query(c2, param), conn)
     # Ensure the cases are numbers, not strings
     df_c1['CASES'] = pd.to_numeric(df_c1['CASES'], errors='coerce')
     df_c2['CASES'] = pd.to_numeric(df_c2['CASES'], errors='coerce')
@@ -115,10 +107,6 @@ def plot_graph_cases(c1, c2, param2, conn):
     # Ensure the date column is in datetime format
     df_c1['DATE'] = pd.to_datetime(df_c1['DATE']).dt.date
     df_c2['DATE'] = pd.to_datetime(df_c2['DATE']).dt.date
-    
-    # start_date = df_c1.loc[0, 'STARTING_DATE'].strftime('%Y-%m-%d')
-    # end_date = df_c1.loc[0, 'ENDING_DATE'].strftime('%Y-%m-%d')
-
 
     # Plot the cases in a bar graph
     plt.figure(figsize=(10, 6))
@@ -128,7 +116,6 @@ def plot_graph_cases(c1, c2, param2, conn):
     plt.xlabel('Country')
     plt.ylabel('Number of cases')
     plt.legend()
-    # plt.show()
 
     # Save the plot to a bytes buffer
     buf = io.BytesIO()
@@ -143,7 +130,30 @@ def plot_graph_cases(c1, c2, param2, conn):
 
 
 def infection_rate_query(c1):
-    sql = f'''
+    # Both databases have different names for United Kingdom
+    if c1 == "United Kingdom":
+        sql = f'''
+SELECT 
+    JHU.DATE, 
+    JHU.COUNTRY_REGION, 
+    (SUM(JHU.CASES) / ECDC.POPULATION) * 100 AS INFECTION_RATE
+FROM 
+    JHU_COVID_19 JHU
+INNER JOIN 
+    (SELECT COUNTRY_REGION, POPULATION AS POPULATION FROM ECDC_GLOBAL WHERE COUNTRY_REGION = 'United_Kingdom' GROUP BY COUNTRY_REGION, POPULATION) ECDC
+    ON JHU.COUNTRY_REGION = 'United Kingdom'
+WHERE 
+    JHU.DATE BETWEEN '2020-01-22' AND '2023-03-09'
+    AND JHU.COUNTRY_REGION = 'United Kingdom' 
+    AND JHU.CASE_TYPE = 'Confirmed'
+GROUP BY 
+    JHU.DATE, JHU.COUNTRY_REGION, ECDC.POPULATION
+ORDER BY 
+    JHU.DATE, JHU.COUNTRY_REGION;
+
+'''
+    else:
+        sql = f'''
 SELECT 
     JHU.DATE, 
     JHU.COUNTRY_REGION, 
@@ -184,7 +194,6 @@ def plot_graph_infection(c1, c2, conn):
     plt.xlabel('Date')
     plt.ylabel('Infection Rate (%)')
     plt.legend()
-    # plt.show()
 
     # Save the plot to a bytes buffer
     buf = io.BytesIO()
@@ -196,7 +205,3 @@ def plot_graph_infection(c1, c2, conn):
     
     # Return the image as a base64 encoded string in a JSON response
     return jsonify({"plot": img_base64})
-
-# c1 = 'Germany'
-# c2 = 'France'
-# print(plot_graph(c1, c2, conn))

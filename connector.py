@@ -1,10 +1,7 @@
-import datetime
 import os
-import logging
 
 import snowflake.connector
-from snowflake.connector import DictCursor
-from flask import Blueprint, request, abort, jsonify, make_response
+from flask import Blueprint, request, jsonify
 
 from data_processing import plot_graph_infection, plot_graph_cases, plot_graph_mortality
 from data_prediction import plot_prediction
@@ -26,26 +23,16 @@ def connect() -> snowflake.connector.SnowflakeConnection:
 
 conn = connect()
 
-# Make the API endpoints
 connector = Blueprint('connector', __name__)
 
-@connector.route('/cases/<c1>/<c2>/<param2>')
-def cases(c1, c2, param2):
-    if param2 in ["cumulative_cases", "total_deaths"]:
-        # print("hello")
-        # sql = cases_deaths_query(c1, c2, param2)
-        # try:
-        #     res = conn.cursor(DictCursor).execute(sql)
-        #     return make_response(jsonify(res.fetchall()))
-        # except Exception as e:
-        #     logging.error(f"Error executing query: {e}")
-        #     abort(500, "Error reading from Snowflake. Check the logs for details.")
-        return plot_graph_cases(c1, c2, param2, conn)
-
-    elif param2 == "infection_rate":
+@connector.route('/cases/<c1>/<c2>/<param>')
+def cases(c1, c2, param):
+    if param in ["cumulative_cases", "total_deaths"]:
+        return plot_graph_cases(c1, c2, param, conn)
+    elif param == "infection_rate":
         return plot_graph_infection(c1, c2, conn)
-    elif param2 == "mortality_rate":
-        return plot_graph_mortality(c1, c2, param2, conn)
+    elif param == "mortality_rate":
+        return plot_graph_mortality(c1, c2, param, conn)
     
 @connector.route('/add_comment', methods=['POST'])
 def add_comment():

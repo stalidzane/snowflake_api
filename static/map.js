@@ -29,7 +29,7 @@ const countryMap = {
     "Vietnam": "Viet Nam",
     "Venezuela": "Venezuela, Bolivarian Republic of",
     "United States of America": "United States",
-    "United Kingdom": "United_Kingdom",
+    "United Kingdom": "United Kingdom",
     "Vatican": "Holy See (Vatican City State)",
 };
 
