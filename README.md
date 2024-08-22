@@ -25,15 +25,19 @@ This project aims to provide an application which provides integrated approach o
    ```bash
    cd snowflake_api
    ```
-3. Install the required dependencies:
+3. Create a virtual environment using Python 3.12:
+   ```bash
+   python3 -m venv api_env
+   ```
+4. Install the required dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-4. Run the application:
+5. Run the application:
    ```bash
-   python app.py
+   python3 app.py
    ```
-   NOTE. Some machines need python3 to work.
+   NOTE. Some machines need python to work.
 
 ## Usage
 - Run the application and navigate to `http://localhost:8001` in your browser.
@@ -49,5 +53,3 @@ This project aims to provide an application which provides integrated approach o
 - **Plot generation:** Uses Matplotlib in collaboration with pandas to generate insightful plots.
 - **Time Series Forecasting:** Uses Facebook's Prophet model for predicting future infection and mortality rates.
 - **SQL Querying** Used to query extensive Snowflake dataset.
-
-
