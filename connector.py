@@ -1,5 +1,3 @@
-import os
-
 import snowflake.connector
 from flask import Blueprint, request, jsonify
 
@@ -10,13 +8,13 @@ from mongo_connect import add_user_comment, get_user_comments
 # Make the Snowflake connection
 def connect() -> snowflake.connector.SnowflakeConnection:
     creds = {
-            'account': "TE31414",
-            'user': 'lindastalidzane',
-            'password': "Apelsins15!",
-            'warehouse': "COMPUTE_WH",
+            'account': "<account_locator>",
+            'user': "<your_username>",
+            'password': "<your_password>",
+            'warehouse': "<your_warehouse>",
             'database': "COVID19_DATA",
             'schema': "PUBLIC",
-            'host' : "te31414.us-east-2.aws.snowflakecomputing.com",
+            'host' : "<your_account_url_without_http",
             'client_session_keep_alive': True
         }
     return snowflake.connector.connect(**creds)
