@@ -10,13 +10,13 @@ from mongo_connect import add_user_comment, get_user_comments
 # Make the Snowflake connection
 def connect() -> snowflake.connector.SnowflakeConnection:
     creds = {
-            'account': "SZ21568",
-            'user': 'linda',
-            'password': "Galdalete1",
-            'warehouse': "DATA_API",
-            'database': "COVID19_EPIDEMIOLOGICAL_DATA",
+            'account': "TE31414",
+            'user': 'lindastalidzane',
+            'password': "Apelsins15!",
+            'warehouse': "COMPUTE_WH",
+            'database': "COVID19_DATA",
             'schema': "PUBLIC",
-            'host' : "sz21568.us-east-2.aws.snowflakecomputing.com",
+            'host' : "te31414.us-east-2.aws.snowflakecomputing.com",
             'client_session_keep_alive': True
         }
     return snowflake.connector.connect(**creds)

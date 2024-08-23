@@ -46,6 +46,7 @@ function cases() {
                 const imgElement = document.getElementById('plot');
                 imgElement.src = 'data:image/png;base64,' + data.plot;
                 imgElement.style.display = 'block'; 
+                document.getElementById("output").innerHTML = "";
             } else {
                 alert('No plot was generated');
             }
@@ -114,6 +115,5 @@ function clearSelection() {
     document.getElementById('country1').value = '';
     document.getElementById('country2').value = '';
     document.getElementById('plot').style.display = 'none';
-    document.getElementById('pred_img').style.display = 'none';
     console.log("Selection and graph cleared");
 }

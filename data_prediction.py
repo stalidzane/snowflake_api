@@ -72,6 +72,5 @@ def plot_prediction(c1, c2, conn, pred):
 
     # Convert the image to a base64 string to embed in HTML
     plot_url = base64.b64encode(buf.getvalue()).decode('utf-8')
-    print("prediction was created")
     buf.close()
     return jsonify({"plot_url": plot_url})

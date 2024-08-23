@@ -29,15 +29,26 @@ This project aims to provide an application which provides integrated approach o
    ```bash
    python3 -m venv api_env
    ```
-4. Install the required dependencies:
+4. Active the virtual environment:
+   ```bash
+   api_env/bin/activate
+   ```
+5. Install the required dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-5. Run the application:
+6. To set up necessary Snowflake configuration, run this command in a Snowflake worksheet replacing the database name with your own:
+   ```
+   CREATE DATABASE <shared_db> FROM SHARE SZ21568.SNOW_API;
+   ```
+
+7. In file "connector.py" add your Snowlfake credentials in the appropriate locations in the function connect()
+
+8. Run the application:
    ```bash
    python3 app.py
    ```
-   NOTE. Some machines need python to work.
+   NOTE. Some machines require "python" to work.
 
 ## Usage
 - Run the application and navigate to `http://localhost:8001` in your browser.
