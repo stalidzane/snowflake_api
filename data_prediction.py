@@ -40,11 +40,11 @@ def plot_prediction(c1, c2, conn, pred):
     model_c2.fit(df_c2)
 
     # Create a DataFrame to hold future dates - next 300 days
-    future = model_c1.make_future_dataframe(periods=300)
-    future = model_c2.make_future_dataframe(periods=300)
+    future_c1 = model_c1.make_future_dataframe(periods=300)
+    future_c2 = model_c2.make_future_dataframe(periods=300)
     # Generate predictions
-    forecast_c1 = model_c1.predict(future)
-    forecast_c2 = model_c2.predict(future)
+    forecast_c1 = model_c1.predict(future_c1)
+    forecast_c2 = model_c2.predict(future_c2)
 
     # Generate and plot the forecast
     plt.figure(figsize=(10, 6))
