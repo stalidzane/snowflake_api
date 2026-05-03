@@ -1,14 +1,20 @@
 from pymongo import MongoClient
 import certifi
 import datetime
-from flask import request, jsonify
+import os
+from flask import jsonify
+from dotenv import load_dotenv
 
-mongo_uri = 'mongodb+srv://stalidzanelinda:Galdalete1@snow-api.i2o4l.mongodb.net/?retryWrites=true&w=majority&appName=snow-api'
+load_dotenv()
+
+mongo_uri = os.getenv('MONGO_URI')
+if not mongo_uri:
+    raise EnvironmentError("MONGO_URI is not set. Copy .env.example to .env and fill in your credentials.")
 
 client = MongoClient(mongo_uri, tlsCAFile=certifi.where())
 
-db = client['snow-api'] 
-comments_collection = db['user-comments'] 
+db = client['snow-api']
+comments_collection = db['user-comments']
 
 def add_user_comment(data):
     comment_data = {
@@ -19,12 +25,10 @@ def add_user_comment(data):
         "comment": data['comment'],
         "timestamp": datetime.datetime.now().isoformat()
     }
-
     comments_collection.insert_one(comment_data)
-
     return {"status": "success", "message": "Comment added successfully"}
 
 def get_user_comments():
     cursor = comments_collection.find({}, {"_id": 0})
-    comments =  list(d for d in cursor)  
+    comments = list(d for d in cursor)
     return jsonify(comments), 200
